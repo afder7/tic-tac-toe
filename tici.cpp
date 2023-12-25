@@ -1,0 +1,243 @@
+﻿#include <iostream>
+#include <string>
+#include <vector>
+#include <algorithm>
+#include <cmath>
+
+using namespace std;
+
+//in this vector 1 means x = player, -1 means o = computer, 0 = empty
+vector<int> field = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+
+void print_field(vector<int> pfield) {
+	vector<char> pr_field;
+	for (int i = 0; i < 9; i++) {
+		if (pfield[i] == 1)
+			pr_field.push_back('x');
+		else if (pfield[i] == -1)
+			pr_field.push_back('o');
+		else
+			pr_field.push_back(' ');
+	}
+
+	for (int i = 0; i < 3; i++)
+		cout << pr_field[i * 3] << '|' << pr_field[i * 3 + 1] << '|' << pr_field[i * 3 + 2] << "\n";
+}
+
+int game_type = 1;
+
+//setup the field
+void setup()
+{
+	cout << "Hello! It's time to play tic-tac-toe. Make your moves by inputing the number of your move\n";
+	cout << "The positions are\n";
+	cout << "1|2|3\n";
+	cout << "4|5|6\n";
+	cout << "7|8|9\n";
+
+	cout << "Would you like to play me or your friend? 1 if me, 0 if friend: ";
+	cin >> game_type;
+	if (game_type == 1)
+		cout << "You play as x, I play as o. You are the first to make a move. Good luck!\n";
+	else
+		cout << "You play as  x, Your friend plays as o. x is the first to make a move. Good luck!\n";
+
+	print_field(field);
+}
+
+int check_win(vector<int> pfield)
+{
+	int r1 = pfield[0] + pfield[1] + pfield[2];
+	int r2 = pfield[3] + pfield[4] + pfield[5];
+	int r3 = pfield[6] + pfield[7] + pfield[8];
+
+	int s1 = pfield[0] + pfield[3] + pfield[6];
+	int s2 = pfield[1] + pfield[4] + pfield[7];
+	int s3 = pfield[2] + pfield[5] + pfield[8];
+
+	int d1 = pfield[0] + pfield[4] + pfield[8];
+	int d2 = pfield[2] + pfield[4] + pfield[6];
+
+	if (r1 == 3 || r2 == 3 || r3 == 3 || s1 == 3 || s2 == 3 || s3 == 3 || d1 == 3 || d2 == 3)
+		return 1;
+	else if (r1 == -3 || r2 == -3 || r3 == -3 || s1 == -3 || s2 == -3 || s3 == -3 || d1 == -3 || d2 == -3)
+		return -1;
+	else
+		return 0;
+}
+
+void player_move()
+{
+	int pos = 1;
+	cout << "Your next move, player x: ";
+	cin >> pos;
+	while (field[pos - 1] != 0) {
+		cout << "You can't make this move. Your next move: ";
+		cin >> pos;
+	}
+	field[pos - 1] = 1;
+}
+
+//pos - позиция от 1 до 9
+//1 2 3
+//4 5 6
+//7 8 9
+//function to compute all the game outcomes and determine the best possible move
+
+
+int evaluate(vector<int> new_field)
+{
+	if (check_win(new_field) == 1)
+		return 10;
+	else if (check_win(new_field) == -1)
+		return -10;
+	else
+		return 0;
+}
+
+int count(vector<int> pf, int n)
+{
+	int re = 0;
+	for (int i = 0; i < pf.size(); i++)
+		re += (pf[i] == n);
+	return re;
+}
+
+int minimax(vector<int> new_field, int depth, int player)
+{
+	int score = evaluate(new_field);
+
+	//print_field(new_field);
+	if (score)
+	{
+		/*print_field(new_field);
+		cout << player << " " << score << "\n";*/
+		//cout << depth << score * (9 - depth) << "\n";
+		return score * (9 - depth);
+	}
+
+	if (count(new_field, 0) == 0)
+		return 0;
+
+
+	if (player > 0)
+	{
+		int best = -1000;
+		for (int i = 0; i < 9; i++)
+		{
+			if (new_field[i] == 0)
+			{
+				new_field[i] = player;
+
+				best = max(best, minimax(new_field, depth + 1, -1 * player));
+
+				new_field[i] = 0;
+			}
+		}
+		return best;
+	}
+	else
+	{
+		int best = 1000;
+		for (int i = 0; i < 9; i++)
+		{
+			if (new_field[i] == 0)
+			{
+				new_field[i] = player;
+
+				best = min(best, minimax(new_field, depth + 1, -1 * player));
+
+				new_field[i] = 0;
+			}
+		}
+		return best;
+	}
+
+	return 0;
+}
+
+void computer_move()
+{
+	int best = 1000;
+	int best_move = 1;
+	for (int i = 0; i < 9; i++)
+	{
+		if (field[i] == 0) {
+			field[i] = -1;
+			int cur = minimax(field, 0, 1);
+			//cout << i << " " << cur << " " << best << "\n";
+			if (cur < best)
+			{
+				best = cur;
+				best_move = i;
+			}
+			field[i] = 0;
+		}
+	}
+	/*if (count(field, 0) == 0) {
+		cout << "It's a draw!\n";
+		return;
+	}*/
+
+	cout << "My move: " << best_move << "\n";
+	field[best_move] = -1;
+}
+
+void player_move_2p(int player)
+{
+	int pos = 1;
+	if (player == 1)
+		cout << "Your next move, player x: ";
+	else
+		cout << "Your next move, player o: ";
+	cin >> pos;
+	while (field[pos - 1] != 0) {
+		cout << "You can't make this move. Your next move: ";
+		cin >> pos;
+	}
+	field[pos - 1] = player;
+}
+
+int main()
+{
+	setup();
+
+	int cur_player = 1;
+	if (game_type == 1) {
+		while (!check_win(field) && count(field, 0) > 0)
+		{
+			if (cur_player == 1) {
+				player_move();
+			}
+			else {
+				computer_move();
+			}
+
+			print_field(field);
+			cur_player *= -1;
+		}
+	}
+	else {
+		while (!check_win(field) && count(field, 0) > 0)
+		{
+			player_move_2p(cur_player);
+			print_field(field);
+			cur_player *= -1;
+		}
+	}
+
+
+	if (count(field, 0) == 0) {
+		cout << "Thank you for the game!\nIt's a draw!";
+		return 0;
+	}
+
+	cur_player *= -1;
+	cout << "Thank you for the game!\n";
+	if (cur_player == 1)
+		cout << "Player x wins!";
+	else
+		cout << "Player o wins!";
+
+	return 0;
+}
